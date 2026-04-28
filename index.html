@@ -6,613 +6,135 @@
 <title>Calendario Mapulauquen</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f5f4f0;
-    --surface: #ffffff;
-    --surface2: #f0efe9;
-    --border: rgba(0,0,0,0.09);
-    --border2: rgba(0,0,0,0.15);
-    --text: #1a1a18;
-    --text2: #6b6b66;
-    --text3: #9e9e98;
-    --radius: 10px;
-    --booking-bg: #ddeeff;
-    --booking-tx: #0a3d6b;
-    --airbnb-bg: #ffd6e0;
-    --airbnb-tx: #6b0a2a;
-    --wa-bg: #d4f5e4;
-    --wa-tx: #0a4a28;
-    --alianza-bg: #e8e4fc;
-    --alianza-tx: #2a1f6b;
-    --otro-bg: #e8e6df;
-    --otro-tx: #3a3a36;
-    --today: rgba(55,138,221,0.08);
-    --today-th: rgba(55,138,221,0.15);
-    --wk: rgba(0,0,0,0.03);
-    --wk-th: rgba(0,0,0,0.05);
-    --accent: #2d6a4f;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 13px;
-  }
-
-  .page {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 24px 20px 48px;
-  }
-
-  /* Header */
-  .page-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .logo-block { display: flex; align-items: center; gap: 10px; }
-  .logo-icon {
-    width: 36px; height: 36px; border-radius: 8px;
-    background: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-  .logo-text h1 { font-size: 18px; font-weight: 500; letter-spacing: -0.3px; }
-  .logo-text p { font-size: 11px; color: var(--text3); margin-top: 1px; }
-  .header-right { display: flex; align-items: center; gap: 8px; }
-  .status-chip {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 11px; padding: 5px 12px;
-    border: 0.5px solid var(--border2);
-    border-radius: 20px;
-    background: var(--surface);
-    color: var(--text2);
-  }
-  .status-chip.ok { color: #0a4a28; background: var(--wa-bg); border-color: #a8dfc0; }
-  .status-chip.err { color: #6b0a0a; background: #ffdede; border-color: #f0a0a0; }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-  .btn {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px; padding: 5px 14px;
-    border: 0.5px solid var(--border2);
-    border-radius: 20px;
-    background: var(--surface);
-    color: var(--text2);
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .btn:hover { background: var(--surface2); }
-
-  /* Stats */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .stat {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-  }
-  .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .stat-val { font-size: 24px; font-weight: 500; color: var(--text); line-height: 1; }
-  .stat-sub { font-size: 10px; color: var(--text3); margin-top: 4px; }
-
-  /* Calendar controls */
-  .cal-controls {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .month-nav { display: flex; align-items: center; gap: 6px; }
-  .nav-btn {
-    font-family: 'DM Sans', sans-serif;
-    width: 30px; height: 30px;
-    border: 0.5px solid var(--border2);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text2);
-    cursor: pointer;
-    font-size: 14px;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s;
-  }
-  .nav-btn:hover { background: var(--surface2); }
-  .month-label { font-size: 16px; font-weight: 500; min-width: 150px; text-align: center; }
-  .legend { display: flex; gap: 12px; flex-wrap: wrap; }
-  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
-  .leg-dot { width: 10px; height: 10px; border-radius: 3px; }
-
-  /* Table */
-  .table-wrap {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .table-scroll { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; min-width: 800px; }
-
-  th, td { border-right: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
-  th:last-child, td:last-child { border-right: none; }
-
-  th.cabin-col, td.cabin-col {
-    position: sticky; left: 0; z-index: 2;
-    background: var(--surface);
-    min-width: 120px; max-width: 120px;
-    padding: 6px 10px;
-    border-right: 1px solid var(--border2);
-  }
-  th.cabin-col {
-    background: var(--surface2);
-    z-index: 3;
-    font-size: 10px;
-    font-weight: 400;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  th.day-col {
-    min-width: 34px; width: 34px;
-    padding: 5px 2px;
-    text-align: center;
-    font-size: 10px;
-    font-weight: 400;
-    color: var(--text3);
-    background: var(--surface2);
-    white-space: nowrap;
-    line-height: 1.3;
-  }
-  th.day-col.wk { background: var(--wk-th); }
-  th.day-col.today { background: var(--today-th); color: #185FA5; font-weight: 500; }
-
-  td.day-cell {
-    min-width: 34px; width: 34px;
-    height: 28px;
-    text-align: center;
-    vertical-align: middle;
-    padding: 0;
-    position: relative;
-  }
-  td.day-cell.wk { background: var(--wk); }
-  td.day-cell.today { background: var(--today); }
-
-  .cabin-name { font-size: 11px; font-weight: 500; color: var(--text); }
-  .cabin-id { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
-
-  .pill {
-    display: block;
-    font-size: 9px;
-    font-weight: 500;
-    padding: 2px 0;
-    width: 100%;
-    height: 100%;
-    line-height: 24px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    cursor: default;
-  }
-
-  /* Tooltip */
-  .tip-wrap { position: relative; width: 100%; height: 100%; }
-  .tip-wrap:hover .tip { display: block; }
-  .tip {
-    display: none;
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--text);
-    color: #fff;
-    border-radius: 8px;
-    padding: 8px 12px;
-    white-space: nowrap;
-    font-size: 11px;
-    z-index: 200;
-    pointer-events: none;
-    line-height: 1.6;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  }
-  .tip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: var(--text);
-  }
-  .tip b { font-weight: 500; display: block; margin-bottom: 2px; }
-  .tip-tag {
-    display: inline-block;
-    font-size: 9px;
-    padding: 1px 6px;
-    border-radius: 10px;
-    margin-top: 4px;
-  }
-
-  /* Special events */
-  .special-cell {
-    background: #fff8e6 !important;
-    font-size: 8px;
-    color: #7a5000;
-    font-weight: 500;
-    text-align: center;
-    line-height: 28px;
-    overflow: hidden;
-  }
-
-  .last-update {
-    font-size: 10px;
-    color: var(--text3);
-    text-align: right;
-    margin-top: 10px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* Error state */
-  .err-state {
-    padding: 32px;
-    text-align: center;
-    color: var(--text2);
-    line-height: 1.7;
-  }
-  .err-state strong { display: block; color: var(--text); font-size: 14px; margin-bottom: 8px; }
-
-  @media (max-width: 600px) {
-    .page { padding: 16px 12px 32px; }
-    .page-header { flex-direction: column; align-items: flex-start; }
-  }
+:root{--bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.15);--text:#1a1a18;--text2:#6b6b66;--text3:#9e9e98;--r:10px;--bk-bg:#ddeeff;--bk-tx:#0a3d6b;--ab-bg:#ffd6e0;--ab-tx:#6b0a2a;--wa-bg:#d4f5e4;--wa-tx:#0a4a28;--al-bg:#e8e4fc;--al-tx:#2a1f6b;--ot-bg:#e8e6df;--ot-tx:#3a3a36;--accent:#2d6a4f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+.page{max-width:1400px;margin:0 auto;padding:24px 20px 48px}
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.logo-block{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text h1{font-size:18px;font-weight:500;letter-spacing:-.3px}
+.logo-text p{font-size:11px;color:var(--text3);margin-top:1px}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.status-chip{display:flex;align-items:center;gap:6px;font-size:11px;padding:5px 12px;border:0.5px solid var(--border2);border-radius:20px;background:var(--surface);color:var(--text2)}
+.status-chip.ok{color:#0a4a28;background:var(--wa-bg);border-color:#a8dfc0}
+.status-chip.err{color:#6b0a0a;background:#ffdede;border-color:#f0a0a0}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.btn{font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 14px;border:0.5px solid var(--border2);border-radius:20px;background:var(--surface);color:var(--text2);cursor:pointer;transition:background .15s}
+.btn:hover{background:var(--surface2)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-val{font-size:24px;font-weight:500;line-height:1}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.cal-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.month-nav{display:flex;align-items:center;gap:6px}
+.nav-btn{font-family:'DM Sans',sans-serif;width:30px;height:30px;border:0.5px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.nav-btn:hover{background:var(--surface2)}
+.month-label{font-size:16px;font-weight:500;min-width:150px;text-align:center}
+.legend{display:flex;gap:12px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-dot{width:10px;height:10px;border-radius:3px}
+.table-wrap{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.table-scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:800px}
+th,td{border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
+th:last-child,td:last-child{border-right:none}
+th.cc,td.cc{position:sticky;left:0;z-index:2;background:var(--surface);min-width:120px;max-width:120px;padding:6px 10px;border-right:1px solid var(--border2)}
+th.cc{background:var(--surface2);z-index:3;font-size:10px;font-weight:400;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+th.dc{min-width:34px;width:34px;padding:5px 2px;text-align:center;font-size:10px;font-weight:400;color:var(--text3);background:var(--surface2);white-space:nowrap;line-height:1.3}
+th.dc.wk{background:rgba(0,0,0,0.04)}
+th.dc.tod{background:rgba(55,138,221,0.13);color:#185FA5;font-weight:500}
+td.dc{min-width:34px;width:34px;height:28px;text-align:center;vertical-align:middle;padding:0}
+td.dc.wk{background:rgba(0,0,0,0.025)}
+td.dc.tod{background:rgba(55,138,221,0.07)}
+.cn{font-size:11px;font-weight:500}
+.cid{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.pill{display:block;font-size:9px;font-weight:500;padding:2px 0;width:100%;height:100%;line-height:24px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:default}
+.tw{position:relative;width:100%;height:100%}
+.tw:hover .tt{display:block}
+.tt{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;border-radius:8px;padding:8px 12px;white-space:nowrap;font-size:11px;z-index:200;pointer-events:none;line-height:1.6}
+.tt::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a1a18}
+.tt b{font-weight:500;display:block;margin-bottom:2px}
+.tt-tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:10px;margin-top:4px}
+.last-update{font-size:10px;color:var(--text3);text-align:right;margin-top:10px;font-family:'DM Mono',monospace}
 </style>
 </head>
 <body>
 <div class="page">
-
   <div class="page-header">
     <div class="logo-block">
       <div class="logo-icon">🛖</div>
-      <div class="logo-text">
-        <h1>Mapulauquen</h1>
-        <p>Calendario de reservas</p>
-      </div>
+      <div class="logo-text"><h1>Mapulauquen</h1><p>Calendario de reservas</p></div>
     </div>
     <div class="header-right">
-      <div class="status-chip" id="status-chip">
-        <span class="dot"></span>
-        <span id="status-txt">Conectando...</span>
-      </div>
+      <div class="status-chip" id="schip"><span class="dot"></span><span id="stxt">Conectando...</span></div>
       <button class="btn" onclick="loadData()">↻ Actualizar</button>
     </div>
   </div>
-
-  <div class="stats-grid" id="stats-grid">
-    <div class="stat"><div class="stat-label">Noches ocupadas</div><div class="stat-val" id="s-noches">—</div><div class="stat-sub">cabañas 1–10</div></div>
-    <div class="stat"><div class="stat-label">Ocupación</div><div class="stat-val" id="s-ocp">—</div><div class="stat-sub">este mes</div></div>
-    <div class="stat"><div class="stat-label">Canal principal</div><div class="stat-val" id="s-canal" style="font-size:16px">—</div><div class="stat-sub" id="s-canal-sub"></div></div>
-    <div class="stat"><div class="stat-label">Reservas activas</div><div class="stat-val" id="s-res">—</div><div class="stat-sub">este mes</div></div>
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-label">Noches ocupadas</div><div class="stat-val" id="s1">—</div><div class="stat-sub">cabañas 1–10</div></div>
+    <div class="stat"><div class="stat-label">Ocupación</div><div class="stat-val" id="s2">—</div><div class="stat-sub">este mes</div></div>
+    <div class="stat"><div class="stat-label">Canal principal</div><div class="stat-val" id="s3" style="font-size:16px">—</div><div class="stat-sub" id="s3b"></div></div>
+    <div class="stat"><div class="stat-label">Reservas activas</div><div class="stat-val" id="s4">—</div><div class="stat-sub">este mes</div></div>
   </div>
-
   <div class="cal-controls">
     <div class="month-nav">
-      <button class="nav-btn" onclick="changeMonth(-1)">&#8592;</button>
-      <div class="month-label" id="month-label"></div>
-      <button class="nav-btn" onclick="changeMonth(1)">&#8594;</button>
+      <button class="nav-btn" onclick="cm(-1)">&#8592;</button>
+      <div class="month-label" id="mlabel"></div>
+      <button class="nav-btn" onclick="cm(1)">&#8594;</button>
     </div>
     <div class="legend">
-      <div class="leg"><div class="leg-dot" style="background:var(--booking-bg);outline:1px solid #aaccee"></div>Booking</div>
-      <div class="leg"><div class="leg-dot" style="background:var(--airbnb-bg);outline:1px solid #f0b0c0"></div>Airbnb</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--bk-bg);outline:1px solid #aaccee"></div>Booking</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--ab-bg);outline:1px solid #f0b0c0"></div>Airbnb</div>
       <div class="leg"><div class="leg-dot" style="background:var(--wa-bg);outline:1px solid #a0d8b8"></div>WhatsApp</div>
-      <div class="leg"><div class="leg-dot" style="background:var(--alianza-bg);outline:1px solid #c0b8f0"></div>Alianza</div>
-      <div class="leg"><div class="leg-dot" style="background:var(--otro-bg);outline:1px solid #c8c6be"></div>Otro</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--al-bg);outline:1px solid #c0b8f0"></div>Alianza</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--ot-bg);outline:1px solid #c8c6be"></div>Otro</div>
     </div>
   </div>
-
-  <div class="table-wrap">
-    <div class="table-scroll">
-      <div id="cal-table"></div>
-    </div>
-  </div>
-
-  <div class="last-update" id="last-update"></div>
+  <div class="table-wrap"><div class="table-scroll"><div id="cal"></div></div></div>
+  <div class="last-update" id="lupd"></div>
 </div>
-
 <script>
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQIbsSiY6PzF6kYx4WKciLVlbx5HZR-PeU_kp3cX4c3aYNJtuUTwqmAReO8FYl1_VqrWGtLgH65CgHq/pub?gid=1088044025&single=true&output=csv';
-
-const PROXIES = [
-  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  u => `https://thingproxy.freeboard.io/fetch/${u}`,
+const CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQIbsSiY6PzF6kYx4WKciLVlbx5HZR-PeU_kp3cX4c3aYNJtuUTwqmAReO8FYl1_VqrWGtLgH65CgHq/pub?gid=1088044025&single=true&output=csv';
+const PROXIES=[
+  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u=>`https://proxy.cors.sh/${u}`,
 ];
-
-const CABANAS = [
-  {id:'MP01',name:'Araucaria'}, {id:'MP02',name:'Alerce'}, {id:'MP03',name:'Ulmo'},
-  {id:'MP04',name:'Castaño'},  {id:'MP05',name:'Boldo'},   {id:'MP06',name:'Laurel'},
-  {id:'MP07',name:'Raulí'},    {id:'MP08',name:'Coihue'},  {id:'MP09',name:'Ciprés'},
-  {id:'MP10',name:'Pino Oregón'}, {id:'MPS1',name:'Salón Eventos'},
+const CABS=[
+  {id:'MP01',n:'Araucaria'},{id:'MP02',n:'Alerce'},{id:'MP03',n:'Ulmo'},
+  {id:'MP04',n:'Castaño'},{id:'MP05',n:'Boldo'},{id:'MP06',n:'Laurel'},
+  {id:'MP07',n:'Raulí'},{id:'MP08',n:'Coihue'},{id:'MP09',n:'Ciprés'},
+  {id:'MP10',n:'Pino Oregón'},{id:'MPS1',n:'Salón Eventos'},
 ];
-
-const COLORS = {
-  booking:  { bg:'var(--booking-bg)',  tx:'var(--booking-tx)'  },
-  airbnb:   { bg:'var(--airbnb-bg)',   tx:'var(--airbnb-tx)'   },
-  whatsapp: { bg:'var(--wa-bg)',       tx:'var(--wa-tx)'       },
-  alianza:  { bg:'var(--alianza-bg)',  tx:'var(--alianza-tx)'  },
-  expedia:  { bg:'#fff3d4',            tx:'#5a3a00'            },
-  otro:     { bg:'var(--otro-bg)',     tx:'var(--otro-tx)'     },
+const COL={
+  booking:{bg:'var(--bk-bg)',tx:'var(--bk-tx)'},
+  airbnb:{bg:'var(--ab-bg)',tx:'var(--ab-tx)'},
+  whatsapp:{bg:'var(--wa-bg)',tx:'var(--wa-tx)'},
+  alianza:{bg:'var(--al-bg)',tx:'var(--al-tx)'},
+  expedia:{bg:'#fff3d4',tx:'#5a3a00'},
+  otro:{bg:'var(--ot-bg)',tx:'var(--ot-tx)'},
 };
-
-const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DAY_NAMES   = ['D','L','M','X','J','V','S'];
-
-let reservas = [];
-let curY = new Date().getFullYear();
-let curM = new Date().getMonth();
-
-function getColor(canal) {
-  if (!canal) return COLORS.otro;
-  const l = canal.toLowerCase();
-  if (l.includes('booking'))  return COLORS.booking;
-  if (l.includes('airbnb'))   return COLORS.airbnb;
-  if (l.includes('whatsapp')) return COLORS.whatsapp;
-  if (l.includes('alianza'))  return COLORS.alianza;
-  if (l.includes('expedia'))  return COLORS.expedia;
-  return COLORS.otro;
-}
-
-function parseDate(s) {
-  if (!s || !s.trim()) return null;
-  const p = s.trim().split('/');
-  if (p.length !== 3) return null;
-  const d = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function splitCSVLine(line) {
-  const res = []; let cur = '', inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    if (line[i] === '"') { inQ = !inQ; }
-    else if (line[i] === ',' && !inQ) { res.push(cur.trim()); cur = ''; }
-    else cur += line[i];
-  }
-  res.push(cur.trim());
-  return res;
-}
-
-function parseCSV(text) {
-  const lines = text.split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
-  const hdrs = splitCSVLine(lines[0]);
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const vals = splitCSVLine(lines[i]);
-    if (!vals[0]) continue;
-    const o = {};
-    hdrs.forEach((h, j) => o[h] = vals[j] || '');
-    rows.push(o);
-  }
-  return rows;
-}
-
-function rowsToReservas(rows) {
-  return rows.reduce((acc, r) => {
-    const canal   = r['Canal'] || '';
-    const id      = r['ID Cabaña'] || r['ID_Cabaña'] || '';
-    const llegada = r['Fecha de Llegada'] || '';
-    const salida  = r['Fecha de Salida'] || '';
-    if (!canal || !id || !llegada || !salida) return acc;
-    const ll = parseDate(llegada);
-    const sa = parseDate(salida);
-    if (!ll || !sa) return acc;
-    acc.push({
-      canal, id, llegada, salida, ll, sa,
-      cliente: r['Nombre Cliente'] || '',
-      estado:  r['Estado de Reserva Interna'] || '',
-      noches:  parseInt(r['Q de Noches'] || '0') || 0,
-      adultos: parseInt(r['Q de Adultos'] || '0') || 0,
-    });
-    return acc;
-  }, []);
-}
-
-function setStatus(msg, type) {
-  document.getElementById('status-txt').textContent = msg;
-  document.getElementById('status-chip').className = 'status-chip' + (type ? ' ' + type : '');
-}
-
-async function tryFetch(url) {
-  for (let i = 0; i < PROXIES.length; i++) {
-    setStatus(`Conectando (${i + 1}/${PROXIES.length})...`, '');
-    try {
-      const r = await fetch(PROXIES[i](url), { signal: AbortSignal.timeout(9000) });
-      if (!r.ok) continue;
-      const text = await r.text();
-      if (text.trim().startsWith('<') || text.length < 50) continue;
-      return text;
-    } catch (e) { continue; }
-  }
-  return null;
-}
-
-async function loadData() {
-  setStatus('Conectando...', '');
-  const text = await tryFetch(CSV_URL);
-  if (!text) {
-    setStatus('Sin conexión — datos del ' + new Date().toLocaleDateString('es-CL'), 'err');
-    if (reservas.length === 0) loadFallback();
-    render();
-    return;
-  }
-  try {
-    const rows = parseCSV(text);
-    const res  = rowsToReservas(rows);
-    if (res.length === 0) throw new Error('0 reservas parseadas');
-    reservas = res;
-    setStatus('Actualizado · ' + res.length + ' reservas', 'ok');
-    document.getElementById('last-update').textContent =
-      'Última actualización desde Google Sheets: ' + new Date().toLocaleString('es-CL');
-    render();
-  } catch (e) {
-    setStatus('Error: ' + e.message, 'err');
-    loadFallback();
-    render();
-  }
-}
-
-function loadFallback() {
-  const d = s => parseDate(s);
-  reservas = [
-    {canal:'Booking',  id:'MP09',llegada:'21/3/2026',salida:'22/3/2026', cliente:'María José Fernández',estado:'Pagada',  noches:1, adultos:5, ll:d('21/3/2026'),sa:d('22/3/2026')},
-    {canal:'Booking',  id:'MP09',llegada:'2/4/2026', salida:'5/4/2026',  cliente:'Sofía Weber',          estado:'Pagada',  noches:3, adultos:4, ll:d('2/4/2026'), sa:d('5/4/2026')},
-    {canal:'Booking',  id:'MP04',llegada:'3/4/2026', salida:'5/4/2026',  cliente:'Pablo Vargas',         estado:'Pagada',  noches:2, adultos:4, ll:d('3/4/2026'), sa:d('5/4/2026')},
-    {canal:'Alianza',  id:'MP07',llegada:'16/4/2026',salida:'19/4/2026', cliente:'Paula González',       estado:'Pagada',  noches:3, adultos:2, ll:d('16/4/2026'),sa:d('19/4/2026')},
-    {canal:'Alianza',  id:'MP08',llegada:'16/4/2026',salida:'20/4/2026', cliente:'Paula González',       estado:'Pagada',  noches:4, adultos:2, ll:d('16/4/2026'),sa:d('20/4/2026')},
-    {canal:'Whatsapp', id:'MP02',llegada:'3/4/2026', salida:'5/4/2026',  cliente:'Marianne',             estado:'Pagada',  noches:2, adultos:2, ll:d('3/4/2026'), sa:d('5/4/2026')},
-    {canal:'Whatsapp', id:'MP10',llegada:'4/4/2026', salida:'8/4/2026',  cliente:'Karen',                estado:'Cortesía',noches:4, adultos:6, ll:d('4/4/2026'), sa:d('8/4/2026')},
-    {canal:'Booking',  id:'MP01',llegada:'30/3/2026',salida:'31/3/2026', cliente:'Vilma Canelo',         estado:'Pagada',  noches:1, adultos:2, ll:d('30/3/2026'),sa:d('31/3/2026')},
-    {canal:'Whatsapp', id:'MP01',llegada:'31/3/2026',salida:'1/4/2026',  cliente:'Vilma Canelo',         estado:'Pagada',  noches:1, adultos:2, ll:d('31/3/2026'),sa:d('1/4/2026')},
-    {canal:'Whatsapp', id:'MP01',llegada:'7/6/2026', salida:'11/6/2026', cliente:'Carlos',               estado:'Abonada', noches:4, adultos:2, ll:d('7/6/2026'), sa:d('11/6/2026')},
-    {canal:'Whatsapp', id:'MP02',llegada:'29/4/2026',salida:'9/5/2026',  cliente:'Zumbale Primo',        estado:'En Curso',noches:10,adultos:4, ll:d('29/4/2026'),sa:d('9/5/2026')},
-    {canal:'Whatsapp', id:'MP04',llegada:'9/4/2026', salida:'12/5/2026', cliente:'Paulina Aguilera',     estado:'En Curso',noches:33,adultos:4, ll:d('9/4/2026'), sa:d('12/5/2026')},
-    {canal:'Whatsapp', id:'MP05',llegada:'12/4/2026',salida:'12/5/2026', cliente:'Paulina Aguilera',     estado:'En Curso',noches:30,adultos:4, ll:d('12/4/2026'),sa:d('12/5/2026')},
-    {canal:'Alianza',  id:'MP01',llegada:'17/4/2026',salida:'19/4/2026', cliente:'Patricio',             estado:'Abonada', noches:2, adultos:2, ll:d('17/4/2026'),sa:d('19/4/2026')},
-    {canal:'Whatsapp', id:'MP02',llegada:'13/4/2026',salida:'14/4/2026', cliente:'Pablo Riquelme',       estado:'Pagada',  noches:1, adultos:5, ll:d('13/4/2026'),sa:d('14/4/2026')},
-    {canal:'Whatsapp', id:'MP08',llegada:'1/5/2026', salida:'3/5/2026',  cliente:'Gloria I. Cabezas',    estado:'Abonada', noches:2, adultos:4, ll:d('1/5/2026'), sa:d('3/5/2026')},
-    {canal:'Whatsapp', id:'MP01',llegada:'29/6/2026',salida:'4/7/2026',  cliente:'Tatiana Gonzalez',     estado:'En Curso',noches:5, adultos:3, ll:d('29/6/2026'),sa:d('4/7/2026')},
-    {canal:'Whatsapp', id:'MP08',llegada:'24/4/2026',salida:'26/4/2026', cliente:'Felipe',               estado:'Cortesía',noches:2, adultos:3, ll:d('24/4/2026'),sa:d('26/4/2026')},
-    {canal:'Whatsapp', id:'MPS1',llegada:'4/4/2026', salida:'5/4/2026',  cliente:'Andrés Coz',           estado:'Pagada',  noches:1, adultos:4, ll:d('4/4/2026'), sa:d('5/4/2026')},
-    {canal:'Whatsapp', id:'MPS1',llegada:'8/5/2026', salida:'9/5/2026',  cliente:'Andrés Coz',           estado:'Pagada',  noches:1, adultos:4, ll:d('8/5/2026'), sa:d('9/5/2026')},
-    {canal:'Whatsapp', id:'MP09',llegada:'1/5/2026', salida:'2/5/2026',  cliente:'Valeska',              estado:'En Curso',noches:1, adultos:4, ll:d('1/5/2026'), sa:d('2/5/2026')},
-  ];
-}
-
-function buildOcc(year, month) {
-  const dim = new Date(year, month + 1, 0).getDate();
-  const map = {};
-  CABANAS.forEach(c => { map[c.id] = {}; });
-  for (let d = 1; d <= dim; d++) {
-    const cur = new Date(year, month, d);
-    reservas.forEach(r => {
-      if (cur >= r.ll && cur < r.sa) {
-        if (!map[r.id]) map[r.id] = {};
-        if (!map[r.id][d]) map[r.id][d] = [];
-        map[r.id][d].push(r);
-      }
-    });
-  }
-  return map;
-}
-
-function render() {
-  const dim   = new Date(curY, curM + 1, 0).getDate();
-  const occ   = buildOcc(curY, curM);
-  const today = new Date();
-
-  document.getElementById('month-label').textContent = MONTH_NAMES[curM] + ' ' + curY;
-
-  // Stats
-  let totalN = 0, cC = {};
-  CABANAS.filter(c => c.id !== 'MPS1').forEach(cab => {
-    for (let d = 1; d <= dim; d++) {
-      if (occ[cab.id] && occ[cab.id][d]) {
-        totalN++;
-        const canal = occ[cab.id][d][0].canal;
-        cC[canal] = (cC[canal] || 0) + 1;
-      }
-    }
-  });
-  const ocp   = Math.round((totalN / (10 * dim)) * 100);
-  const topC  = Object.entries(cC).sort((a, b) => b[1] - a[1])[0];
-  const totalR = reservas.filter(r => {
-    return r.ll <= new Date(curY, curM + 1, 0) && r.sa >= new Date(curY, curM, 1);
-  }).length;
-
-  document.getElementById('s-noches').textContent = totalN;
-  document.getElementById('s-ocp').textContent    = ocp + '%';
-  document.getElementById('s-canal').textContent  = topC ? topC[0] : '—';
-  document.getElementById('s-canal-sub').textContent = topC ? topC[1] + ' noches' : '';
-  document.getElementById('s-res').textContent    = totalR;
-
-  // Table
-  let html = '<table><thead><tr><th class="cabin-col">Cabaña</th>';
-  for (let d = 1; d <= dim; d++) {
-    const dow  = new Date(curY, curM, d).getDay();
-    const isWk = dow === 0 || dow === 6;
-    const isT  = today.getFullYear() === curY && today.getMonth() === curM && today.getDate() === d;
-    html += `<th class="day-col${isWk ? ' wk' : ''}${isT ? ' today' : ''}">${d}<br>${DAY_NAMES[dow]}</th>`;
-  }
-  html += '</tr></thead><tbody>';
-
-  CABANAS.forEach(cab => {
-    html += `<tr><td class="cabin-col">
-      <div class="cabin-name">${cab.name}</div>
-      <div class="cabin-id">${cab.id}</div>
-    </td>`;
-
-    for (let d = 1; d <= dim; d++) {
-      const dow  = new Date(curY, curM, d).getDay();
-      const isWk = dow === 0 || dow === 6;
-      const isT  = today.getFullYear() === curY && today.getMonth() === curM && today.getDate() === d;
-      const rs   = occ[cab.id] && occ[cab.id][d];
-
-      if (rs && rs.length > 0) {
-        const r   = rs[0];
-        const col = getColor(r.canal);
-        const lbl = r.canal.replace(/whatsapp/i, 'WA').replace(/booking/i, 'Book').substring(0, 7);
-        const estadoTag = {
-          'Pagada':   '#d4f5e4',
-          'Abonada':  '#fff3d4',
-          'En Curso': '#ddeeff',
-          'Cortesía': '#ede4fc',
-        }[r.estado] || '#e8e6df';
-
-        html += `<td class="day-cell${isWk ? ' wk' : ''}${isT ? ' today' : ''}" style="background:${col.bg}">
-          <div class="tip-wrap">
-            <span class="pill" style="color:${col.tx}">${lbl}</span>
-            <div class="tip">
-              <b>${r.cliente || '—'}</b>
-              ${r.canal} · ${r.llegada} → ${r.salida}<br>
-              ${r.noches} noche(s) · ${r.adultos} pax
-              <span class="tip-tag" style="background:${estadoTag};color:#333">${r.estado}</span>
-            </div>
-          </div>
-        </td>`;
-      } else {
-        html += `<td class="day-cell${isWk ? ' wk' : ''}${isT ? ' today' : ''}"></td>`;
-      }
-    }
-    html += '</tr>';
-  });
-
-  html += '</tbody></table>';
-  document.getElementById('cal-table').innerHTML = html;
-}
-
-function changeMonth(delta) {
-  curM += delta;
-  if (curM > 11) { curM = 0; curY++; }
-  if (curM < 0)  { curM = 11; curY--; }
-  render();
-}
-
-// Init
-render();
-loadData();
+const MNAMES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DN=['D','L','M','X','J','V','S'];
+const ESTADO_COL={'Pagada':'#d4f5e4','Abonada':'#fff3d4','En Curso':'#ddeeff','Cortesía':'#ede4fc'};
+let reservas=[],curY=new Date().getFullYear(),curM=new Date().getMonth();
+function gc(c){if(!c)return COL.otro;const l=c.toLowerCase();if(l.includes('booking'))return COL.booking;if(l.includes('airbnb'))return COL.airbnb;if(l.includes('whatsapp'))return COL.whatsapp;if(l.includes('alianza'))return COL.alianza;if(l.includes('expedia'))return COL.expedia;return COL.otro;}
+function pd(s){if(!s||!s.trim())return null;const p=s.trim().split('/');if(p.length!==3)return null;const d=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));return isNaN(d.getTime())?null:d;}
+function splitLine(line){const res=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){if(line[i]==='"'){inQ=!inQ;}else if(line[i]===','&&!inQ){res.push(cur.trim());cur='';}else cur+=line[i];}res.push(cur.trim());return res;}
+function parseCSV(text){const lines=text.split('\n').filter(l=>l.trim());if(lines.length<2)return[];const hdrs=splitLine(lines[0]);return lines.slice(1).reduce((acc,line)=>{const vals=splitLine(line);if(!vals[0])return acc;const o={};hdrs.forEach((h,j)=>o[h]=vals[j]||'');acc.push(o);return acc;},[]);}
+function toRes(rows){return rows.reduce((acc,r)=>{const canal=r['Canal']||'',id=r['ID Cabaña']||r['ID_Cabaña']||'';const llegada=r['Fecha de Llegada']||'',salida=r['Fecha de Salida']||'';if(!canal||!id||!llegada||!salida)return acc;const ll=pd(llegada),sa=pd(salida);if(!ll||!sa)return acc;acc.push({canal,id,llegada,salida,ll,sa,cliente:r['Nombre Cliente']||'',estado:r['Estado de Reserva Interna']||'',noches:parseInt(r['Q de Noches']||'0')||0,adultos:parseInt(r['Q de Adultos']||'0')||0});return acc;},[]);}
+function setSt(msg,type){document.getElementById('stxt').textContent=msg;document.getElementById('schip').className='status-chip'+(type?' '+type:'');}
+async function tryFetch(url){for(let i=0;i<PROXIES.length;i++){setSt(`Conectando (${i+1}/${PROXIES.length})...`,'');try{const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),9000);const r=await fetch(PROXIES[i](url),{signal:ctrl.signal});clearTimeout(tid);if(!r.ok)continue;const text=await r.text();if(text.trim().startsWith('<')||text.length<50)continue;return text;}catch(e){continue;}}return null;}
+async function loadData(){setSt('Conectando...','');const text=await tryFetch(CSV);if(!text){setSt('Sin conexión — mostrando datos guardados','err');if(reservas.length===0)loadFallback();render();return;}try{const rows=parseCSV(text);const res=toRes(rows);if(res.length===0)throw new Error('0 reservas');reservas=res;setSt('Actualizado · '+res.length+' reservas','ok');document.getElementById('lupd').textContent='Última actualización: '+new Date().toLocaleString('es-CL');render();}catch(e){setSt('Error: '+e.message,'err');if(reservas.length===0)loadFallback();render();}}
+function loadFallback(){const d=s=>pd(s);reservas=[{canal:'Booking',id:'MP09',llegada:'2/4/2026',salida:'5/4/2026',cliente:'Sofía Weber',estado:'Pagada',noches:3,adultos:4,ll:d('2/4/2026'),sa:d('5/4/2026')},{canal:'Booking',id:'MP04',llegada:'3/4/2026',salida:'5/4/2026',cliente:'Pablo Vargas',estado:'Pagada',noches:2,adultos:4,ll:d('3/4/2026'),sa:d('5/4/2026')},{canal:'Alianza',id:'MP07',llegada:'16/4/2026',salida:'19/4/2026',cliente:'Paula González',estado:'Pagada',noches:3,adultos:2,ll:d('16/4/2026'),sa:d('19/4/2026')},{canal:'Alianza',id:'MP08',llegada:'16/4/2026',salida:'20/4/2026',cliente:'Paula González',estado:'Pagada',noches:4,adultos:2,ll:d('16/4/2026'),sa:d('20/4/2026')},{canal:'Whatsapp',id:'MP02',llegada:'3/4/2026',salida:'5/4/2026',cliente:'Marianne',estado:'Pagada',noches:2,adultos:2,ll:d('3/4/2026'),sa:d('5/4/2026')},{canal:'Whatsapp',id:'MP10',llegada:'4/4/2026',salida:'8/4/2026',cliente:'Karen',estado:'Cortesía',noches:4,adultos:6,ll:d('4/4/2026'),sa:d('8/4/2026')},{canal:'Whatsapp',id:'MP01',llegada:'7/6/2026',salida:'11/6/2026',cliente:'Carlos',estado:'Abonada',noches:4,adultos:2,ll:d('7/6/2026'),sa:d('11/6/2026')},{canal:'Whatsapp',id:'MP02',llegada:'29/4/2026',salida:'9/5/2026',cliente:'Zumbale Primo',estado:'En Curso',noches:10,adultos:4,ll:d('29/4/2026'),sa:d('9/5/2026')},{canal:'Whatsapp',id:'MP04',llegada:'9/4/2026',salida:'12/5/2026',cliente:'Paulina Aguilera',estado:'En Curso',noches:33,adultos:4,ll:d('9/4/2026'),sa:d('12/5/2026')},{canal:'Whatsapp',id:'MP05',llegada:'12/4/2026',salida:'12/5/2026',cliente:'Paulina Aguilera',estado:'En Curso',noches:30,adultos:4,ll:d('12/4/2026'),sa:d('12/5/2026')},{canal:'Alianza',id:'MP01',llegada:'17/4/2026',salida:'19/4/2026',cliente:'Patricio',estado:'Abonada',noches:2,adultos:2,ll:d('17/4/2026'),sa:d('19/4/2026')},{canal:'Whatsapp',id:'MP02',llegada:'13/4/2026',salida:'14/4/2026',cliente:'Pablo Riquelme',estado:'Pagada',noches:1,adultos:5,ll:d('13/4/2026'),sa:d('14/4/2026')},{canal:'Whatsapp',id:'MP08',llegada:'1/5/2026',salida:'3/5/2026',cliente:'Gloria I. Cabezas',estado:'Abonada',noches:2,adultos:4,ll:d('1/5/2026'),sa:d('3/5/2026')},{canal:'Whatsapp',id:'MP01',llegada:'29/6/2026',salida:'4/7/2026',cliente:'Tatiana Gonzalez',estado:'En Curso',noches:5,adultos:3,ll:d('29/6/2026'),sa:d('4/7/2026')},{canal:'Whatsapp',id:'MP08',llegada:'24/4/2026',salida:'26/4/2026',cliente:'Felipe',estado:'Cortesía',noches:2,adultos:3,ll:d('24/4/2026'),sa:d('26/4/2026')},{canal:'Whatsapp',id:'MPS1',llegada:'8/5/2026',salida:'9/5/2026',cliente:'Andrés Coz',estado:'Pagada',noches:1,adultos:4,ll:d('8/5/2026'),sa:d('9/5/2026')},{canal:'Whatsapp',id:'MP09',llegada:'1/5/2026',salida:'2/5/2026',cliente:'Valeska',estado:'En Curso',noches:1,adultos:4,ll:d('1/5/2026'),sa:d('2/5/2026')}];}
+function buildOcc(Y,M){const dim=new Date(Y,M+1,0).getDate(),map={};CABS.forEach(c=>{map[c.id]={};});for(let d=1;d<=dim;d++){const cur=new Date(Y,M,d);reservas.forEach(r=>{if(cur>=r.ll&&cur<r.sa){if(!map[r.id][d])map[r.id][d]=[];map[r.id][d].push(r);}});}return map;}
+function render(){const dim=new Date(curY,curM+1,0).getDate(),occ=buildOcc(curY,curM),today=new Date();document.getElementById('mlabel').textContent=MNAMES[curM]+' '+curY;let totalN=0,cC={};CABS.filter(c=>c.id!=='MPS1').forEach(cab=>{for(let d=1;d<=dim;d++){if(occ[cab.id]&&occ[cab.id][d]){totalN++;const canal=occ[cab.id][d][0].canal;cC[canal]=(cC[canal]||0)+1;}}});const ocp=Math.round((totalN/(10*dim))*100);const topC=Object.entries(cC).sort((a,b)=>b[1]-a[1])[0];const totalR=reservas.filter(r=>r.ll<=new Date(curY,curM+1,0)&&r.sa>=new Date(curY,curM,1)).length;document.getElementById('s1').textContent=totalN;document.getElementById('s2').textContent=ocp+'%';document.getElementById('s3').textContent=topC?topC[0]:'—';document.getElementById('s3b').textContent=topC?topC[1]+' noches':'';document.getElementById('s4').textContent=totalR;let html='<table><thead><tr><th class="cc">Cabaña</th>';for(let d=1;d<=dim;d++){const dow=new Date(curY,curM,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===curM&&today.getDate()===d;html+=`<th class="dc${wk?' wk':''}${isT?' tod':''}">${d}<br>${DN[dow]}</th>`;}html+='</tr></thead><tbody>';CABS.forEach(cab=>{html+=`<tr><td class="cc"><div class="cn">${cab.n}</div><div class="cid">${cab.id}</div></td>`;for(let d=1;d<=dim;d++){const dow=new Date(curY,curM,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===curM&&today.getDate()===d;const rs=occ[cab.id]&&occ[cab.id][d];if(rs&&rs.length>0){const r=rs[0],col=gc(r.canal);const lbl=r.canal.replace(/whatsapp/i,'WA').replace(/booking/i,'Book').substring(0,7);const etag=ESTADO_COL[r.estado]||'#e8e6df';html+=`<td class="dc${wk?' wk':''}${isT?' tod':''}" style="background:${col.bg}"><div class="tw"><span class="pill" style="color:${col.tx}">${lbl}</span><div class="tt"><b>${r.cliente||'—'}</b>${r.canal} · ${r.llegada} → ${r.salida}<br>${r.noches}n · ${r.adultos} pax<span class="tt-tag" style="background:${etag};color:#333">${r.estado}</span></div></div></td>`;}else{html+=`<td class="dc${wk?' wk':''}${isT?' tod':''}"></td>`;}}html+='</tr>';});html+='</tbody></table>';document.getElementById('cal').innerHTML=html;}
+function cm(d){curM+=d;if(curM>11){curM=0;curY++;}if(curM<0){curM=11;curY--;}render();}
+render();loadData();
 </script>
 </body>
 </html>
