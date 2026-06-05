@@ -22,7 +22,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
 .btn{font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 14px;border:0.5px solid var(--border2);border-radius:20px;background:var(--surface);color:var(--text2);cursor:pointer;transition:background .15s}
 .btn:hover{background:var(--surface2)}
-.btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
 .stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);padding:14px 16px}
 .stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
@@ -110,9 +109,9 @@ td.dc.tod{background:rgba(55,138,221,0.07)}
   </div>
   <div class="cal-controls">
     <div class="month-nav">
-      <button class="nav-btn" id="prevBtn" onclick="navPrev()">&#8592;</button>
+      <button class="nav-btn" onclick="navPrev()">&#8592;</button>
       <div class="month-label" id="mlabel"></div>
-      <button class="nav-btn" id="nextBtn" onclick="navNext()">&#8594;</button>
+      <button class="nav-btn" onclick="navNext()">&#8594;</button>
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div class="view-toggle">
@@ -165,24 +164,200 @@ const MNAMES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto',
 const DN=['D','L','M','X','J','V','S'];
 const ESTADO_COL={'Pagada':'#d4f5e4','Abonada':'#fff3d4','En Curso':'#ddeeff','Cortesía':'#ede4fc'};
 let reservas=[],curY=new Date().getFullYear(),curM=new Date().getMonth(),viewMode='month';
+
 function gc(c){if(!c)return COL.otro;const l=c.toLowerCase();if(l.includes('booking'))return COL.booking;if(l.includes('airbnb'))return COL.airbnb;if(l.includes('whatsapp'))return COL.whatsapp;if(l.includes('alianza'))return COL.alianza;if(l.includes('expedia'))return COL.expedia;return COL.otro;}
 function pd(s){if(!s||!s.trim())return null;const p=s.trim().split('/');if(p.length!==3)return null;const d=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));return isNaN(d.getTime())?null:d;}
 function splitLine(line){const res=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){if(line[i]==='"'){inQ=!inQ;}else if(line[i]===','&&!inQ){res.push(cur.trim());cur='';}else cur+=line[i];}res.push(cur.trim());return res;}
 function parseCSV(text){const lines=text.split('\n').filter(l=>l.trim());if(lines.length<2)return[];const hdrs=splitLine(lines[0]);return lines.slice(1).reduce((acc,line)=>{const vals=splitLine(line);if(!vals[0])return acc;const o={};hdrs.forEach((h,j)=>o[h]=vals[j]||'');acc.push(o);return acc;},[]);}
 function toRes(rows){return rows.reduce((acc,r)=>{const canal=r['Canal']||'',id=r['ID Cabaña']||r['ID_Cabaña']||'';const llegada=r['Fecha de Llegada']||'',salida=r['Fecha de Salida']||'';if(!canal||!id||!llegada||!salida)return acc;const ll=pd(llegada),sa=pd(salida);if(!ll||!sa)return acc;acc.push({canal,id,llegada,salida,ll,sa,cliente:r['Nombre Cliente']||'',estado:r['Estado de Reserva Interna']||'',noches:parseInt(r['Q de Noches']||'0')||0,adultos:parseInt(r['Q de Adultos']||'0')||0});return acc;},[]);}
 function setSt(msg,type){document.getElementById('stxt').textContent=msg;document.getElementById('schip').className='status-chip'+(type?' '+type:'');}
-function buildOcc(Y,M){const dim=new Date(Y,M+1,0).getDate(),map={};CABS.forEach(c=>{map[c.id]={};});for(let d=1;d<=dim;d++){const cur=new Date(Y,M,d);reservas.forEach(r=>{if(cur>=r.ll&&cur<r.sa){if(!map[r.id][d])map[r.id][d]=[];map[r.id][d].push(r);}});}return map;}
-function calcStats(months){let totalN=0,cC={},reservaSet=new Set();months.forEach(({Y,M})=>{const dim=new Date(Y,M+1,0).getDate();const occ=buildOcc(Y,M);CABS_ONLY.forEach(cab=>{for(let d=1;d<=dim;d++){if(occ[cab.id]&&occ[cab.id][d]){totalN++;const canal=occ[cab.id][d][0].canal;cC[canal]=(cC[canal]||0)+1;}}});const start=new Date(Y,M,1),end=new Date(Y,M+1,0);reservas.filter(r=>r.id!=='MPS1'&&r.ll<=end&&r.sa>=start).forEach(r=>{reservaSet.add(r.id+'|'+r.llegada+'|'+r.cliente);});});const totalDays=months.reduce((s,{Y,M})=>s+new Date(Y,M+1,0).getDate(),0);const ocp=totalDays>0?Math.round((totalN/(N_CABS*totalDays))*100):0;const topC=Object.entries(cC).sort((a,b)=>b[1]-a[1])[0];return{totalN,ocp,topC,totalR:reservaSet.size};}
-function updateStats(){let months;if(viewMode==='year'){months=Array.from({length:12},(_,i)=>({Y:curY,M:i}));document.getElementById('mlabel').textContent=String(curY);document.getElementById('s1b').textContent='año '+curY;document.getElementById('s2b').textContent='año '+curY;document.getElementById('s4b').textContent='año '+curY;}else{months=[{Y:curY,M:curM}];document.getElementById('mlabel').textContent=MNAMES[curM]+' '+curY;document.getElementById('s1b').textContent='cabañas 1–10';document.getElementById('s2b').textContent=MNAMES[curM].toLowerCase();document.getElementById('s4b').textContent=MNAMES[curM].toLowerCase();}const{totalN,ocp,topC,totalR}=calcStats(months);document.getElementById('s1').textContent=totalN;document.getElementById('s2').textContent=ocp+'%';document.getElementById('s3').textContent=topC?topC[0]:'—';document.getElementById('s3b').textContent=topC?topC[1]+' noches':'';document.getElementById('s4').textContent=totalR;}
-function renderMonthly(){const dim=new Date(curY,curM+1,0).getDate(),occ=buildOcc(curY,curM),today=new Date();let html='<table><thead><tr><th class="cc">Cabaña</th>';for(let d=1;d<=dim;d++){const dow=new Date(curY,curM,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===curM&&today.getDate()===d;html+=`<th class="dc${wk?' wk':''}${isT?' tod':''}">${d}<br>${DN[dow]}</th>`;}html+='</tr></thead><tbody>';CABS.forEach(cab=>{html+=`<tr><td class="cc"><div class="cn">${cab.n}</div><div class="cid">${cab.id}</div></td>`;for(let d=1;d<=dim;d++){const dow=new Date(curY,curM,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===curM&&today.getDate()===d;const rs=occ[cab.id]&&occ[cab.id][d];if(rs&&rs.length>0){const r=rs[0],col=gc(r.canal);const lbl=r.canal.replace(/whatsapp/i,'WA').replace(/booking/i,'Book').substring(0,7);const etag=ESTADO_COL[r.estado]||'#e8e6df';html+=`<td class="dc${wk?' wk':''}${isT?' tod':''}" style="background:${col.bg}"><div class="tw"><span class="pill" style="color:${col.tx}">${lbl}</span><div class="tt"><b>${r.cliente||'—'}</b>${r.canal} · ${r.llegada} → ${r.salida}<br>${r.noches}n · ${r.adultos} pax<span class="tt-tag" style="background:${etag};color:#333">${r.estado}</span></div></div></td>`;}else{html+=`<td class="dc${wk?' wk':''}${isT?' tod':''}"></td>`;}}html+='</tr>';});html+='</tbody></table>';document.getElementById('cal').innerHTML=html;}
-function renderAnnual(){const today=new Date();let html='';for(let M=0;M<12;M++){const dim=new Date(curY,M+1,0).getDate();const occ=buildOcc(curY,M);let mn=0;CABS_ONLY.forEach(cab=>{for(let d=1;d<=dim;d++){if(occ[cab.id]&&occ[cab.id][d])mn++;}});const mocp=Math.round((mn/(N_CABS*dim))*100);const pillCls=mocp>=70?'hi':mocp>=35?'mid':'lo';html+=`<div class="month-block"><div class="month-block-header"><span class="month-block-name">${MNAMES[M]}</span><span class="month-occ-pill ${pillCls}">${mocp}% ocup.</span></div><div style="overflow-x:auto"><table class="ann-table"><thead><tr><th class="ann-head-cc">Cabaña</th>`;for(let d=1;d<=dim;d++){const dow=new Date(curY,M,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===M&&today.getDate()===d;html+=`<th class="ann-dh${wk?' wk':''}${isT?' tod':''}">${d}</th>`;}html+=`</tr></thead><tbody>`;CABS.forEach(cab=>{let rowN=0;if(cab.id!=='MPS1'){for(let d=1;d<=dim;d++){if(occ[cab.id]&&occ[cab.id][d])rowN++;}}const rowPct=dim>0?Math.round((rowN/dim)*100):0;html+=`<tr><td class="ann-cc"><div class="ann-name">${cab.n}</div><div class="ann-id">${cab.id}</div>`;if(cab.id!=='MPS1'){html+=`<div class="row-occ"><div class="row-occ-fill" style="width:${rowPct}%"></div></div>`;}html+=`</td>`;for(let d=1;d<=dim;d++){const dow=new Date(curY,M,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===M&&today.getDate()===d;const rs=occ[cab.id]&&occ[cab.id][d];if(rs&&rs.length>0){const r=rs[0],col=gc(r.canal);const etag=ESTADO_COL[r.estado]||'#e8e6df';html+=`<td class="ann-dc occ${wk?' wk':''}${isT?' tod':''}" style="background:${col.bg}"><div class="tw"><span class="ann-dot"></span><div class="tt"><b>${r.cliente||'—'}</b>${r.canal} · ${r.llegada} → ${r.salida}<br>${r.noches}n · ${r.adultos} pax<span class="tt-tag" style="background:${etag};color:#333">${r.estado}</span></div></div></td>`;}else{html+=`<td class="ann-dc${wk?' wk':''}${isT?' tod':''}"></td>`;}}html+=`</tr>`;});html+=`</tbody></table></div></div>`;}document.getElementById('ann-grid').innerHTML=html;}
-function render(){updateStats();if(viewMode==='month'){document.getElementById('monthly-view').style.display='';document.getElementById('annual-view').style.display='none';renderMonthly();}else{document.getElementById('monthly-view').style.display='none';document.getElementById('annual-view').style.display='';renderAnnual();}}
-function setView(v){viewMode=v;document.getElementById('vt-month').className='vtbtn'+(v==='month'?' active':'');document.getElementById('vt-year').className='vtbtn'+(v==='year'?' active':'');render();}
+
+function buildOcc(Y,M){
+  const dim=new Date(Y,M+1,0).getDate(),map={};
+  CABS.forEach(c=>{map[c.id]={};});
+  for(let d=1;d<=dim;d++){
+    const cur=new Date(Y,M,d);
+    reservas.forEach(r=>{
+      if(cur>=r.ll&&cur<r.sa){
+        if(!map[r.id][d])map[r.id][d]=[];
+        map[r.id][d].push(r);
+      }
+    });
+  }
+  return map;
+}
+
+function calcStats(months){
+  let totalN=0,cC={},reservaSet=new Set();
+  months.forEach(({Y,M})=>{
+    const dim=new Date(Y,M+1,0).getDate();
+    const occ=buildOcc(Y,M);
+    CABS_ONLY.forEach(cab=>{
+      for(let d=1;d<=dim;d++){
+        if(occ[cab.id]&&occ[cab.id][d]){
+          totalN++;
+          const canal=occ[cab.id][d][0].canal;
+          cC[canal]=(cC[canal]||0)+1;
+        }
+      }
+    });
+    const start=new Date(Y,M,1),end=new Date(Y,M+1,0);
+    reservas.filter(r=>r.id!=='MPS1'&&r.ll<=end&&r.sa>=start).forEach(r=>{
+      reservaSet.add(r.id+'|'+r.llegada+'|'+r.cliente);
+    });
+  });
+  const totalDays=months.reduce((s,{Y,M})=>s+new Date(Y,M+1,0).getDate(),0);
+  const ocp=totalDays>0?Math.round((totalN/(N_CABS*totalDays))*100):0;
+  const topC=Object.entries(cC).sort((a,b)=>b[1]-a[1])[0];
+  return{totalN,ocp,topC,totalR:reservaSet.size};
+}
+
+function updateStats(){
+  let months;
+  if(viewMode==='year'){
+    months=Array.from({length:12},(_,i)=>({Y:curY,M:i}));
+    document.getElementById('mlabel').textContent=String(curY);
+    document.getElementById('s1b').textContent='año '+curY;
+    document.getElementById('s2b').textContent='año '+curY;
+    document.getElementById('s4b').textContent='año '+curY;
+  }else{
+    months=[{Y:curY,M:curM}];
+    document.getElementById('mlabel').textContent=MNAMES[curM]+' '+curY;
+    document.getElementById('s1b').textContent='cabañas 1–10';
+    document.getElementById('s2b').textContent=MNAMES[curM].toLowerCase();
+    document.getElementById('s4b').textContent=MNAMES[curM].toLowerCase();
+  }
+  const{totalN,ocp,topC,totalR}=calcStats(months);
+  document.getElementById('s1').textContent=totalN;
+  document.getElementById('s2').textContent=ocp+'%';
+  document.getElementById('s3').textContent=topC?topC[0]:'—';
+  document.getElementById('s3b').textContent=topC?topC[1]+' noches':'';
+  document.getElementById('s4').textContent=totalR;
+}
+
+function renderMonthly(){
+  const dim=new Date(curY,curM+1,0).getDate(),occ=buildOcc(curY,curM),today=new Date();
+  let html='<table><thead><tr><th class="cc">Cabaña</th>';
+  for(let d=1;d<=dim;d++){const dow=new Date(curY,curM,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===curM&&today.getDate()===d;html+=`<th class="dc${wk?' wk':''}${isT?' tod':''}">${d}<br>${DN[dow]}</th>`;}
+  html+='</tr></thead><tbody>';
+  CABS.forEach(cab=>{
+    html+=`<tr><td class="cc"><div class="cn">${cab.n}</div><div class="cid">${cab.id}</div></td>`;
+    for(let d=1;d<=dim;d++){
+      const dow=new Date(curY,curM,d).getDay(),wk=dow===0||dow===6;
+      const isT=today.getFullYear()===curY&&today.getMonth()===curM&&today.getDate()===d;
+      const rs=occ[cab.id]&&occ[cab.id][d];
+      if(rs&&rs.length>0){
+        const r=rs[0],col=gc(r.canal);
+        const lbl=r.canal.replace(/whatsapp/i,'WA').replace(/booking/i,'Book').substring(0,7);
+        const etag=ESTADO_COL[r.estado]||'#e8e6df';
+        html+=`<td class="dc${wk?' wk':''}${isT?' tod':''}" style="background:${col.bg}"><div class="tw"><span class="pill" style="color:${col.tx}">${lbl}</span><div class="tt"><b>${r.cliente||'—'}</b>${r.canal} · ${r.llegada} → ${r.salida}<br>${r.noches}n · ${r.adultos} pax<span class="tt-tag" style="background:${etag};color:#333">${r.estado}</span></div></div></td>`;
+      }else{
+        html+=`<td class="dc${wk?' wk':''}${isT?' tod':''}"></td>`;
+      }
+    }
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('cal').innerHTML=html;
+}
+
+function renderAnnual(){
+  const today=new Date();
+  let html='';
+  for(let M=0;M<12;M++){
+    const dim=new Date(curY,M+1,0).getDate();
+    const occ=buildOcc(curY,M);
+    let mn=0;
+    CABS_ONLY.forEach(cab=>{for(let d=1;d<=dim;d++){if(occ[cab.id]&&occ[cab.id][d])mn++;}});
+    const mocp=Math.round((mn/(N_CABS*dim))*100);
+    const pillCls=mocp>=70?'hi':mocp>=35?'mid':'lo';
+    html+=`<div class="month-block"><div class="month-block-header"><span class="month-block-name">${MNAMES[M]}</span><span class="month-occ-pill ${pillCls}">${mocp}% ocup.</span></div><div style="overflow-x:auto"><table class="ann-table"><thead><tr><th class="ann-head-cc">Cabaña</th>`;
+    for(let d=1;d<=dim;d++){const dow=new Date(curY,M,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===M&&today.getDate()===d;html+=`<th class="ann-dh${wk?' wk':''}${isT?' tod':''}">${d}</th>`;}
+    html+=`</tr></thead><tbody>`;
+    CABS.forEach(cab=>{
+      let rowN=0;
+      if(cab.id!=='MPS1'){for(let d=1;d<=dim;d++){if(occ[cab.id]&&occ[cab.id][d])rowN++;}}
+      const rowPct=dim>0?Math.round((rowN/dim)*100):0;
+      html+=`<tr><td class="ann-cc"><div class="ann-name">${cab.n}</div><div class="ann-id">${cab.id}</div>`;
+      if(cab.id!=='MPS1'){html+=`<div class="row-occ"><div class="row-occ-fill" style="width:${rowPct}%"></div></div>`;}
+      html+=`</td>`;
+      for(let d=1;d<=dim;d++){
+        const dow=new Date(curY,M,d).getDay(),wk=dow===0||dow===6;
+        const isT=today.getFullYear()===curY&&today.getMonth()===M&&today.getDate()===d;
+        const rs=occ[cab.id]&&occ[cab.id][d];
+        if(rs&&rs.length>0){
+          const r=rs[0],col=gc(r.canal);
+          const etag=ESTADO_COL[r.estado]||'#e8e6df';
+          html+=`<td class="ann-dc occ${wk?' wk':''}${isT?' tod':''}" style="background:${col.bg}"><div class="tw"><span class="ann-dot"></span><div class="tt"><b>${r.cliente||'—'}</b>${r.canal} · ${r.llegada} → ${r.salida}<br>${r.noches}n · ${r.adultos} pax<span class="tt-tag" style="background:${etag};color:#333">${r.estado}</span></div></div></td>`;
+        }else{
+          html+=`<td class="ann-dc${wk?' wk':''}${isT?' tod':''}"></td>`;
+        }
+      }
+      html+=`</tr>`;
+    });
+    html+=`</tbody></table></div></div>`;
+  }
+  document.getElementById('ann-grid').innerHTML=html;
+}
+
+function render(){
+  updateStats();
+  if(viewMode==='month'){
+    document.getElementById('monthly-view').style.display='block';
+    document.getElementById('annual-view').style.display='none';
+    renderMonthly();
+  }else{
+    document.getElementById('monthly-view').style.display='none';
+    document.getElementById('annual-view').style.display='block';
+    renderAnnual();
+  }
+}
+
+function setView(v){
+  viewMode=v;
+  document.getElementById('vt-month').className='vtbtn'+(v==='month'?' active':'');
+  document.getElementById('vt-year').className='vtbtn'+(v==='year'?' active':'');
+  render();
+}
+
 function navPrev(){if(viewMode==='year'){curY--;}else{curM--;if(curM<0){curM=11;curY--;}}render();}
 function navNext(){if(viewMode==='year'){curY++;}else{curM++;if(curM>11){curM=0;curY++;}}render();}
-async function tryFetch(url){const urlNoCache=url+'&t='+Date.now();for(let i=0;i<PROXIES.length;i++){setSt(`Conectando (${i+1}/${PROXIES.length})...`,'');try{const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),9000);const r=await fetch(PROXIES[i](urlNoCache),{signal:ctrl.signal,cache:'no-store'});clearTimeout(tid);if(!r.ok)continue;const text=await r.text();if(text.trim().startsWith('<')||text.length<50)continue;return text;}catch(e){continue;}}return null;}
-async function loadData(){setSt('Conectando...','');const text=await tryFetch(CSV);if(!text){setSt('Sin conexión — mostrando datos guardados','err');if(reservas.length===0)loadFallback();render();return;}try{const rows=parseCSV(text);const res=toRes(rows);if(res.length===0)throw new Error('0 reservas');reservas=res;setSt('Actualizado · '+res.length+' reservas','ok');document.getElementById('lupd').textContent='Última actualización: '+new Date().toLocaleString('es-CL');render();}catch(e){setSt('Error: '+e.message,'err');if(reservas.length===0)loadFallback();render();}}
+
+async function tryFetch(url){
+  const urlNoCache=url+'&t='+Date.now();
+  for(let i=0;i<PROXIES.length;i++){
+    setSt(`Conectando (${i+1}/${PROXIES.length})...`,'');
+    try{
+      const ctrl=new AbortController();
+      const tid=setTimeout(()=>ctrl.abort(),9000);
+      const r=await fetch(PROXIES[i](urlNoCache),{signal:ctrl.signal,cache:'no-store'});
+      clearTimeout(tid);
+      if(!r.ok)continue;
+      const text=await r.text();
+      if(text.trim().startsWith('<')||text.length<50)continue;
+      return text;
+    }catch(e){continue;}
+  }
+  return null;
+}
+
+async function loadData(){
+  setSt('Conectando...','');
+  const text=await tryFetch(CSV);
+  if(!text){setSt('Sin conexión — mostrando datos guardados','err');if(reservas.length===0)loadFallback();render();return;}
+  try{
+    const rows=parseCSV(text);
+    const res=toRes(rows);
+    if(res.length===0)throw new Error('0 reservas');
+    reservas=res;
+    setSt('Actualizado · '+res.length+' reservas','ok');
+    document.getElementById('lupd').textContent='Última actualización: '+new Date().toLocaleString('es-CL');
+    render();
+  }catch(e){setSt('Error: '+e.message,'err');if(reservas.length===0)loadFallback();render();}
+}
+
 function loadFallback(){const d=s=>pd(s);reservas=[{canal:'Booking',id:'MP09',llegada:'2/4/2026',salida:'5/4/2026',cliente:'Sofía Weber',estado:'Pagada',noches:3,adultos:4,ll:d('2/4/2026'),sa:d('5/4/2026')},{canal:'Booking',id:'MP04',llegada:'3/4/2026',salida:'5/4/2026',cliente:'Pablo Vargas',estado:'Pagada',noches:2,adultos:4,ll:d('3/4/2026'),sa:d('5/4/2026')},{canal:'Alianza',id:'MP07',llegada:'16/4/2026',salida:'19/4/2026',cliente:'Paula González',estado:'Pagada',noches:3,adultos:2,ll:d('16/4/2026'),sa:d('19/4/2026')},{canal:'Alianza',id:'MP08',llegada:'16/4/2026',salida:'20/4/2026',cliente:'Paula González',estado:'Pagada',noches:4,adultos:2,ll:d('16/4/2026'),sa:d('20/4/2026')},{canal:'Whatsapp',id:'MP02',llegada:'3/4/2026',salida:'5/4/2026',cliente:'Marianne',estado:'Pagada',noches:2,adultos:2,ll:d('3/4/2026'),sa:d('5/4/2026')},{canal:'Whatsapp',id:'MP10',llegada:'4/4/2026',salida:'8/4/2026',cliente:'Karen',estado:'Cortesía',noches:4,adultos:6,ll:d('4/4/2026'),sa:d('8/4/2026')},{canal:'Whatsapp',id:'MP01',llegada:'7/6/2026',salida:'11/6/2026',cliente:'Carlos',estado:'Abonada',noches:4,adultos:2,ll:d('7/6/2026'),sa:d('11/6/2026')},{canal:'Whatsapp',id:'MP02',llegada:'29/4/2026',salida:'9/5/2026',cliente:'Zumbale Primo',estado:'En Curso',noches:10,adultos:4,ll:d('29/4/2026'),sa:d('9/5/2026')},{canal:'Whatsapp',id:'MP04',llegada:'9/4/2026',salida:'12/5/2026',cliente:'Paulina Aguilera',estado:'En Curso',noches:33,adultos:4,ll:d('9/4/2026'),sa:d('12/5/2026')},{canal:'Whatsapp',id:'MP05',llegada:'12/4/2026',salida:'12/5/2026',cliente:'Paulina Aguilera',estado:'En Curso',noches:30,adultos:4,ll:d('12/4/2026'),sa:d('12/5/2026')},{canal:'Alianza',id:'MP01',llegada:'17/4/2026',salida:'19/4/2026',cliente:'Patricio',estado:'Abonada',noches:2,adultos:2,ll:d('17/4/2026'),sa:d('19/4/2026')},{canal:'Whatsapp',id:'MP02',llegada:'13/4/2026',salida:'14/4/2026',cliente:'Pablo Riquelme',estado:'Pagada',noches:1,adultos:5,ll:d('13/4/2026'),sa:d('14/4/2026')},{canal:'Whatsapp',id:'MP08',llegada:'1/5/2026',salida:'3/5/2026',cliente:'Gloria I. Cabezas',estado:'Abonada',noches:2,adultos:4,ll:d('1/5/2026'),sa:d('3/5/2026')},{canal:'Whatsapp',id:'MP01',llegada:'29/6/2026',salida:'4/7/2026',cliente:'Tatiana Gonzalez',estado:'En Curso',noches:5,adultos:3,ll:d('29/6/2026'),sa:d('4/7/2026')},{canal:'Whatsapp',id:'MP08',llegada:'24/4/2026',salida:'26/4/2026',cliente:'Felipe',estado:'Cortesía',noches:2,adultos:3,ll:d('24/4/2026'),sa:d('26/4/2026')},{canal:'Whatsapp',id:'MPS1',llegada:'8/5/2026',salida:'9/5/2026',cliente:'Andrés Coz',estado:'Pagada',noches:1,adultos:4,ll:d('8/5/2026'),sa:d('9/5/2026')},{canal:'Booking',id:'MP09',llegada:'1/5/2026',salida:'2/5/2026',cliente:'Valeska',estado:'En Curso',noches:1,adultos:4,ll:d('1/5/2026'),sa:d('2/5/2026')}];}
+
 render();
 loadData();
 </script>
