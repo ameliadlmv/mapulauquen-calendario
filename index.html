@@ -61,6 +61,18 @@ td.dc.tod{background:rgba(55,138,221,0.07)}
 .tt b{font-weight:500;display:block;margin-bottom:2px}
 .tt-tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:10px;margin-top:4px}
 #annual-view{display:none}
+#services-view{display:none}
+.svc-day{border-bottom:0.5px solid var(--border)}
+.svc-day:last-child{border-bottom:none}
+.svc-day-head{background:var(--surface2);padding:8px 16px;font-size:11px;font-weight:500;color:var(--text2);text-transform:capitalize}
+.svc-day-head.tod{background:rgba(55,138,221,0.13);color:#185FA5}
+.svc-row{display:flex;align-items:center;gap:14px;padding:10px 16px;border-top:0.5px solid var(--border)}
+.svc-time{font-family:'DM Mono',monospace;font-size:12px;color:var(--text);min-width:90px;font-weight:500}
+.svc-badge{font-size:10px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.svc-info{flex:1;min-width:0}
+.svc-client{font-size:12px;font-weight:500}
+.svc-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.svc-empty{padding:30px 16px;text-align:center;color:var(--text3);font-size:12px}
 .annual-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
 .month-block{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden}
 .month-block-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px;background:var(--surface2);border-bottom:0.5px solid var(--border)}
@@ -117,6 +129,7 @@ td.dc.tod{background:rgba(55,138,221,0.07)}
       <div class="view-toggle">
         <button class="vtbtn active" id="vt-month" onclick="setView('month')">Mes</button>
         <button class="vtbtn" id="vt-year" onclick="setView('year')">Año</button>
+        <button class="vtbtn" id="vt-services" onclick="setView('services')">Servicios</button>
       </div>
       <div class="legend">
         <div class="leg"><div class="leg-dot" style="background:var(--bk-bg);outline:1px solid #aaccee"></div>Booking</div>
@@ -133,6 +146,9 @@ td.dc.tod{background:rgba(55,138,221,0.07)}
   <div id="annual-view">
     <div class="annual-grid" id="ann-grid"></div>
   </div>
+  <div id="services-view">
+    <div class="table-wrap"><div id="svc-list"></div></div>
+  </div>
   <div class="last-update" id="lupd"></div>
 </div>
 <script>
@@ -148,10 +164,14 @@ const CABS=[
   {id:'MP01',n:'Araucaria'},{id:'MP02',n:'Alerce'},{id:'MP03',n:'Ulmo'},
   {id:'MP04',n:'Castaño'},{id:'MP05',n:'Boldo'},{id:'MP06',n:'Laurel'},
   {id:'MP07',n:'Raulí'},{id:'MP08',n:'Coihue'},{id:'MP09',n:'Ciprés'},
-  {id:'MP10',n:'Pino Oregón'},{id:'MPS1',n:'Salón Eventos'},
+  {id:'MP10',n:'Pino Oregón'},
 ];
-const CABS_ONLY=CABS.filter(c=>c.id!=='MPS1');
+const CABS_ONLY=CABS;
 const N_CABS=CABS_ONLY.length;
+const SERVICES=[{id:'MPS1',n:'Salón de Eventos'},{id:'MPS2',n:'Jacuzzi'}];
+function isService(id){return /^MPS/.test(id||'');}
+function svcMeta(id){return SERVICES.find(s=>s.id===id)||{id,n:id};}
+const SVC_COL={'MPS1':{bg:'#ede4fc',tx:'#2a1f6b'},'MPS2':{bg:'#d6f0ff',tx:'#0a4a6b'}};
 const COL={
   booking:{bg:'var(--bk-bg)',tx:'var(--bk-tx)'},
   airbnb:{bg:'var(--ab-bg)',tx:'var(--ab-tx)'},
@@ -169,7 +189,7 @@ function gc(c){if(!c)return COL.otro;const l=c.toLowerCase();if(l.includes('book
 function pd(s){if(!s||!s.trim())return null;const p=s.trim().split('/');if(p.length!==3)return null;const d=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));return isNaN(d.getTime())?null:d;}
 function splitLine(line){const res=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){if(line[i]==='"'){inQ=!inQ;}else if(line[i]===','&&!inQ){res.push(cur.trim());cur='';}else cur+=line[i];}res.push(cur.trim());return res;}
 function parseCSV(text){const lines=text.split('\n').filter(l=>l.trim());if(lines.length<2)return[];const hdrs=splitLine(lines[0]);return lines.slice(1).reduce((acc,line)=>{const vals=splitLine(line);if(!vals[0])return acc;const o={};hdrs.forEach((h,j)=>o[h]=vals[j]||'');acc.push(o);return acc;},[]);}
-function toRes(rows){return rows.reduce((acc,r)=>{const canal=r['Canal']||'',id=r['ID Cabaña']||r['ID_Cabaña']||'';const llegada=r['Fecha de Llegada']||'',salida=r['Fecha de Salida']||'';if(!canal||!id||!llegada||!salida)return acc;const ll=pd(llegada),sa=pd(salida);if(!ll||!sa)return acc;acc.push({canal,id,llegada,salida,ll,sa,cliente:r['Nombre Cliente']||'',estado:r['Estado de Reserva Interna']||'',noches:parseInt(r['Q de Noches']||'0')||0,adultos:parseInt(r['Q de Adultos']||'0')||0});return acc;},[]);}
+function toRes(rows){return rows.reduce((acc,r)=>{const canal=r['Canal']||'',id=r['ID Cabaña']||r['ID_Cabaña']||'';const llegada=r['Fecha de Llegada']||'',salida=r['Fecha de Salida']||'';if(!canal||!id||!llegada||!salida)return acc;const ll=pd(llegada),sa=pd(salida);if(!ll||!sa)return acc;acc.push({canal,id,llegada,salida,ll,sa,cliente:r['Nombre Cliente']||'',estado:r['Estado de Reserva Interna']||'',noches:parseInt(r['Q de Noches']||'0')||0,adultos:parseInt(r['Q de Adultos']||'0')||0,horaLl:r['Hora de Llegada']||'',horaSa:r['Hora de Salida']||'',tipoVenta:r['Tipo de Venta']||''});return acc;},[]);}
 function setSt(msg,type){document.getElementById('stxt').textContent=msg;document.getElementById('schip').className='status-chip'+(type?' '+type:'');}
 
 function buildOcc(Y,M){
@@ -178,6 +198,7 @@ function buildOcc(Y,M){
   for(let d=1;d<=dim;d++){
     const cur=new Date(Y,M,d);
     reservas.forEach(r=>{
+      if(!map[r.id])return;
       if(cur>=r.ll&&cur<r.sa){
         if(!map[r.id][d])map[r.id][d]=[];
         map[r.id][d].push(r);
@@ -202,7 +223,7 @@ function calcStats(months){
       }
     });
     const start=new Date(Y,M,1),end=new Date(Y,M+1,0);
-    reservas.filter(r=>r.id!=='MPS1'&&r.ll<=end&&r.sa>=start).forEach(r=>{
+    reservas.filter(r=>!isService(r.id)&&r.ll<=end&&r.sa>=start).forEach(r=>{
       reservaSet.add(r.id+'|'+r.llegada+'|'+r.cliente);
     });
   });
@@ -300,16 +321,48 @@ function renderAnnual(){
   document.getElementById('ann-grid').innerHTML=html;
 }
 
+function renderServices(){
+  const today=new Date();
+  document.getElementById('mlabel').textContent=MNAMES[curM]+' '+curY;
+  const svc=reservas.filter(r=>isService(r.id)&&r.ll.getFullYear()===curY&&r.ll.getMonth()===curM)
+    .sort((a,b)=>a.ll-b.ll||(a.horaLl||'').localeCompare(b.horaLl||''));
+  if(svc.length===0){
+    document.getElementById('svc-list').innerHTML='<div class="svc-empty">No hay servicios agendados (Jacuzzi, Salón de Eventos) para '+MNAMES[curM].toLowerCase()+' '+curY+'.</div>';
+    return;
+  }
+  const byDay={};
+  svc.forEach(r=>{const k=r.ll.getFullYear()+'-'+r.ll.getMonth()+'-'+r.ll.getDate();(byDay[k]=byDay[k]||[]).push(r);});
+  let html='';
+  Object.keys(byDay).sort((a,b)=>new Date(a.replace(/-/g,'/'))-new Date(b.replace(/-/g,'/'))).forEach(k=>{
+    const rows=byDay[k],d0=rows[0].ll;
+    const isT=today.getFullYear()===d0.getFullYear()&&today.getMonth()===d0.getMonth()&&today.getDate()===d0.getDate();
+    const dowName=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][d0.getDay()];
+    html+=`<div class="svc-day"><div class="svc-day-head${isT?' tod':''}">${dowName} ${d0.getDate()} de ${MNAMES[d0.getMonth()].toLowerCase()}</div>`;
+    rows.forEach(r=>{
+      const sm=svcMeta(r.id),col=SVC_COL[r.id]||{bg:'var(--ot-bg)',tx:'var(--ot-tx)'};
+      const etag=ESTADO_COL[r.estado]||'#e8e6df';
+      const horario=(r.horaLl||'—')+(r.horaSa?(' → '+r.horaSa):'');
+      html+=`<div class="svc-row"><div class="svc-time">${horario}</div><div class="svc-badge" style="background:${col.bg};color:${col.tx}">${sm.n}</div><div class="svc-info"><div class="svc-client">${r.cliente||'—'}</div><div class="svc-meta">${r.canal}${r.adultos?' · '+r.adultos+' pax':''}</div></div><div class="svc-badge" style="background:${etag};color:#333">${r.estado||'—'}</div></div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('svc-list').innerHTML=html;
+}
+
 function render(){
   updateStats();
+  document.getElementById('monthly-view').style.display='none';
+  document.getElementById('annual-view').style.display='none';
+  document.getElementById('services-view').style.display='none';
   if(viewMode==='month'){
     document.getElementById('monthly-view').style.display='block';
-    document.getElementById('annual-view').style.display='none';
     renderMonthly();
-  }else{
-    document.getElementById('monthly-view').style.display='none';
+  }else if(viewMode==='year'){
     document.getElementById('annual-view').style.display='block';
     renderAnnual();
+  }else{
+    document.getElementById('services-view').style.display='block';
+    renderServices();
   }
 }
 
@@ -317,6 +370,7 @@ function setView(v){
   viewMode=v;
   document.getElementById('vt-month').className='vtbtn'+(v==='month'?' active':'');
   document.getElementById('vt-year').className='vtbtn'+(v==='year'?' active':'');
+  document.getElementById('vt-services').className='vtbtn'+(v==='services'?' active':'');
   render();
 }
 
