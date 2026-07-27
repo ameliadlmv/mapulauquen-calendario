@@ -58,6 +58,8 @@ td.dc.tod{background:rgba(55,138,221,0.07)}
 .tw:hover .tt{display:block}
 .tt{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;border-radius:8px;padding:8px 12px;white-space:nowrap;font-size:11px;z-index:200;pointer-events:none;line-height:1.6}
 .tt::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a1a18}
+.tt.below{bottom:auto;top:calc(100% + 6px)}
+.tt.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:#1a1a18}
 .tt b{font-weight:500;display:block;margin-bottom:2px}
 .tt-tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:10px;margin-top:4px}
 #annual-view{display:none}
@@ -261,7 +263,7 @@ function renderMonthly(){
   let html='<table><thead><tr><th class="cc">Cabaña</th>';
   for(let d=1;d<=dim;d++){const dow=new Date(curY,curM,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===curM&&today.getDate()===d;html+=`<th class="dc${wk?' wk':''}${isT?' tod':''}">${d}<br>${DN[dow]}</th>`;}
   html+='</tr></thead><tbody>';
-  CABS.forEach(cab=>{
+  CABS.forEach((cab,rowIdx)=>{
     html+=`<tr><td class="cc"><div class="cn">${cab.n}</div><div class="cid">${cab.id}</div></td>`;
     for(let d=1;d<=dim;d++){
       const dow=new Date(curY,curM,d).getDay(),wk=dow===0||dow===6;
@@ -271,7 +273,10 @@ function renderMonthly(){
         const r=rs[0],col=gc(r.canal);
         const lbl=r.canal.replace(/whatsapp/i,'WA').replace(/booking/i,'Book').substring(0,7);
         const etag=ESTADO_COL[r.estado]||'#e8e6df';
-        html+=`<td class="dc${wk?' wk':''}${isT?' tod':''}" style="background:${col.bg}"><div class="tw"><span class="pill" style="color:${col.tx}">${lbl}</span><div class="tt"><b>${r.cliente||'—'}</b>${r.canal} · ${r.llegada} → ${r.salida}<br>${r.noches}n · ${r.adultos} pax<span class="tt-tag" style="background:${etag};color:#333">${r.estado}</span></div></div></td>`;
+        const isArr=r.ll.getFullYear()===curY&&r.ll.getMonth()===curM&&r.ll.getDate()===d;
+        const arrStyle=isArr?`background:${col.bg};box-shadow:inset 2px 0 0 rgba(0,0,0,0.4)`:`background:${col.bg}`;
+        const ttCls=rowIdx===0?' below':'';
+        html+=`<td class="dc${wk?' wk':''}${isT?' tod':''}" style="${arrStyle}"><div class="tw"><span class="pill" style="color:${col.tx}">${lbl}</span><div class="tt${ttCls}"><b>${r.cliente||'—'}</b>${r.canal} · ${r.llegada} → ${r.salida}<br>${r.noches}n · ${r.adultos} pax<span class="tt-tag" style="background:${etag};color:#333">${r.estado}</span></div></div></td>`;
       }else{
         html+=`<td class="dc${wk?' wk':''}${isT?' tod':''}"></td>`;
       }
@@ -295,7 +300,7 @@ function renderAnnual(){
     html+=`<div class="month-block"><div class="month-block-header"><span class="month-block-name">${MNAMES[M]}</span><span class="month-occ-pill ${pillCls}">${mocp}% ocup.</span></div><div style="overflow-x:auto"><table class="ann-table"><thead><tr><th class="ann-head-cc">Cabaña</th>`;
     for(let d=1;d<=dim;d++){const dow=new Date(curY,M,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===M&&today.getDate()===d;html+=`<th class="ann-dh${wk?' wk':''}${isT?' tod':''}">${d}</th>`;}
     html+=`</tr></thead><tbody>`;
-    CABS.forEach(cab=>{
+    CABS.forEach((cab,rowIdx)=>{
       let rowN=0;
       for(let d=1;d<=dim;d++){if(occ[cab.id]&&occ[cab.id][d])rowN++;}
       const rowPct=dim>0?Math.round((rowN/dim)*100):0;
@@ -307,7 +312,10 @@ function renderAnnual(){
         if(rs&&rs.length>0){
           const r=rs[0],col=gc(r.canal);
           const etag=ESTADO_COL[r.estado]||'#e8e6df';
-          html+=`<td class="ann-dc occ${wk?' wk':''}${isT?' tod':''}" style="background:${col.bg}"><div class="tw"><span class="ann-dot"></span><div class="tt"><b>${r.cliente||'—'}</b>${r.canal} · ${r.llegada} → ${r.salida}<br>${r.noches}n · ${r.adultos} pax<span class="tt-tag" style="background:${etag};color:#333">${r.estado}</span></div></div></td>`;
+          const isArr=r.ll.getFullYear()===curY&&r.ll.getMonth()===M&&r.ll.getDate()===d;
+          const arrStyle=isArr?`background:${col.bg};box-shadow:inset 2px 0 0 rgba(0,0,0,0.4)`:`background:${col.bg}`;
+          const ttCls=rowIdx===0?' below':'';
+          html+=`<td class="ann-dc occ${wk?' wk':''}${isT?' tod':''}" style="${arrStyle}"><div class="tw"><span class="ann-dot"></span><div class="tt${ttCls}"><b>${r.cliente||'—'}</b>${r.canal} · ${r.llegada} → ${r.salida}<br>${r.noches}n · ${r.adultos} pax<span class="tt-tag" style="background:${etag};color:#333">${r.estado}</span></div></div></td>`;
         }else{
           html+=`<td class="ann-dc${wk?' wk':''}${isT?' tod':''}"></td>`;
         }
@@ -408,7 +416,7 @@ async function loadData(){
   }catch(e){setSt('Error: '+e.message,'err');if(reservas.length===0)loadFallback();render();}
 }
 
-function loadFallback(){const d=s=>pd(s);reservas=[{canal:'Booking',id:'MP09',llegada:'2/4/2026',salida:'5/4/2026',cliente:'Sofía Weber',estado:'Pagada',noches:3,adultos:4,ll:d('2/4/2026'),sa:d('5/4/2026')},{canal:'Booking',id:'MP04',llegada:'3/4/2026',salida:'5/4/2026',cliente:'Pablo Vargas',estado:'Pagada',noches:2,adultos:4,ll:d('3/4/2026'),sa:d('5/4/2026')},{canal:'Alianza',id:'MP07',llegada:'16/4/2026',salida:'19/4/2026',cliente:'Paula González',estado:'Pagada',noches:3,adultos:2,ll:d('16/4/2026'),sa:d('19/4/2026')},{canal:'Alianza',id:'MP08',llegada:'16/4/2026',salida:'20/4/2026',cliente:'Paula González',estado:'Pagada',noches:4,adultos:2,ll:d('16/4/2026'),sa:d('20/4/2026')},{canal:'Whatsapp',id:'MP02',llegada:'3/4/2026',salida:'5/4/2026',cliente:'Marianne',estado:'Pagada',noches:2,adultos:2,ll:d('3/4/2026'),sa:d('5/4/2026')},{canal:'Whatsapp',id:'MP10',llegada:'4/4/2026',salida:'8/4/2026',cliente:'Karen',estado:'Cortesía',noches:4,adultos:6,ll:d('4/4/2026'),sa:d('8/4/2026')},{canal:'Whatsapp',id:'MP01',llegada:'7/6/2026',salida:'11/6/2026',cliente:'Carlos',estado:'Abonada',noches:4,adultos:2,ll:d('7/6/2026'),sa:d('11/6/2026')},{canal:'Whatsapp',id:'MP02',llegada:'29/4/2026',salida:'9/5/2026',cliente:'Zumbale Primo',estado:'En Curso',noches:10,adultos:4,ll:d('29/4/2026'),sa:d('9/5/2026')},{canal:'Whatsapp',id:'MP04',llegada:'9/4/2026',salida:'12/5/2026',cliente:'Paulina Aguilera',estado:'En Curso',noches:33,adultos:4,ll:d('9/4/2026'),sa:d('12/5/2026')},{canal:'Whatsapp',id:'MP05',llegada:'12/4/2026',salida:'12/5/2026',cliente:'Paulina Aguilera',estado:'En Curso',noches:30,adultos:4,ll:d('12/4/2026'),sa:d('12/5/2026')},{canal:'Alianza',id:'MP01',llegada:'17/4/2026',salida:'19/4/2026',cliente:'Patricio',estado:'Abonada',noches:2,adultos:2,ll:d('17/4/2026'),sa:d('19/4/2026')},{canal:'Whatsapp',id:'MP02',llegada:'13/4/2026',salida:'14/4/2026',cliente:'Pablo Riquelme',estado:'Pagada',noches:1,adultos:5,ll:d('13/4/2026'),sa:d('14/4/2026')},{canal:'Whatsapp',id:'MP08',llegada:'1/5/2026',salida:'3/5/2026',cliente:'Gloria I. Cabezas',estado:'Abonada',noches:2,adultos:4,ll:d('1/5/2026'),sa:d('3/5/2026')},{canal:'Whatsapp',id:'MP01',llegada:'29/6/2026',salida:'4/7/2026',cliente:'Tatiana Gonzalez',estado:'En Curso',noches:5,adultos:3,ll:d('29/6/2026'),sa:d('4/7/2026')},{canal:'Whatsapp',id:'MP08',llegada:'24/4/2026',salida:'26/4/2026',cliente:'Felipe',estado:'Cortesía',noches:2,adultos:3,ll:d('24/4/2026'),sa:d('26/4/2026')},{canal:'Booking',id:'MP09',llegada:'1/5/2026',salida:'2/5/2026',cliente:'Valeska',estado:'En Curso',noches:1,adultos:4,ll:d('1/5/2026'),sa:d('2/5/2026')}];}
+function loadFallback(){const d=s=>pd(s);reservas=[{canal:'Booking',id:'MP09',llegada:'2/4/2026',salida:'5/4/2026',cliente:'Sofía Weber',estado:'Pagada',noches:3,adultos:4,ll:d('2/4/2026'),sa:d('5/4/2026')},{canal:'Booking',id:'MP04',llegada:'3/4/2026',salida:'5/4/2026',cliente:'Pablo Vargas',estado:'Pagada',noches:2,adultos:4,ll:d('3/4/2026'),sa:d('5/4/2026')},{canal:'Alianza',id:'MP07',llegada:'16/4/2026',salida:'19/4/2026',cliente:'Paula González',estado:'Pagada',noches:3,adultos:2,ll:d('16/4/2026'),sa:d('19/4/2026')},{canal:'Alianza',id:'MP08',llegada:'16/4/2026',salida:'20/4/2026',cliente:'Paula González',estado:'Pagada',noches:4,adultos:2,ll:d('16/4/2026'),sa:d('20/4/2026')},{canal:'Whatsapp',id:'MP02',llegada:'3/4/2026',salida:'5/4/2026',cliente:'Marianne',estado:'Pagada',noches:2,adultos:2,ll:d('3/4/2026'),sa:d('5/4/2026')},{canal:'Whatsapp',id:'MP10',llegada:'4/4/2026',salida:'8/4/2026',cliente:'Karen',estado:'Cortesía',noches:4,adultos:6,ll:d('4/4/2026'),sa:d('8/4/2026')},{canal:'Whatsapp',id:'MP01',llegada:'7/6/2026',salida:'11/6/2026',cliente:'Carlos',estado:'Abonada',noches:4,adultos:2,ll:d('7/6/2026'),sa:d('11/6/2026')},{canal:'Whatsapp',id:'MP02',llegada:'29/4/2026',salida:'9/5/2026',cliente:'Zumbale Primo',estado:'En Curso',noches:10,adultos:4,ll:d('29/4/2026'),sa:d('9/5/2026')},{canal:'Whatsapp',id:'MP04',llegada:'9/4/2026',salida:'12/5/2026',cliente:'Paulina Aguilera',estado:'En Curso',noches:33,adultos:4,ll:d('9/4/2026'),sa:d('12/5/2026')},{canal:'Whatsapp',id:'MP05',llegada:'12/4/2026',salida:'12/5/2026',cliente:'Paulina Aguilera',estado:'En Curso',noches:30,adultos:4,ll:d('12/4/2026'),sa:d('12/5/2026')},{canal:'Alianza',id:'MP01',llegada:'17/4/2026',salida:'19/4/2026',cliente:'Patricio',estado:'Abonada',noches:2,adultos:2,ll:d('17/4/2026'),sa:d('19/4/2026')},{canal:'Whatsapp',id:'MP02',llegada:'13/4/2026',salida:'14/4/2026',cliente:'Pablo Riquelme',estado:'Pagada',noches:1,adultos:5,ll:d('13/4/2026'),sa:d('14/4/2026')},{canal:'Whatsapp',id:'MP08',llegada:'1/5/2026',salida:'3/5/2026',cliente:'Gloria I. Cabezas',estado:'Abonada',noches:2,adultos:4,ll:d('1/5/2026'),sa:d('3/5/2026')},{canal:'Whatsapp',id:'MP01',llegada:'29/6/2026',salida:'4/7/2026',cliente:'Tatiana Gonzalez',estado:'En Curso',noches:5,adultos:3,ll:d('29/6/2026'),sa:d('4/7/2026')},{canal:'Whatsapp',id:'MP08',llegada:'24/4/2026',salida:'26/4/2026',cliente:'Felipe',estado:'Cortesía',noches:2,adultos:3,ll:d('24/4/2026'),sa:d('26/4/2026')},{canal:'Whatsapp',id:'MPS1',llegada:'8/5/2026',salida:'9/5/2026',cliente:'Andrés Coz',estado:'Pagada',noches:1,adultos:4,ll:d('8/5/2026'),sa:d('9/5/2026')},{canal:'Booking',id:'MP09',llegada:'1/5/2026',salida:'2/5/2026',cliente:'Valeska',estado:'En Curso',noches:1,adultos:4,ll:d('1/5/2026'),sa:d('2/5/2026')}];}
 
 render();
 loadData();
