@@ -155,14 +155,11 @@ td.dc.tod{background:rgba(55,138,221,0.07)}
   <div class="last-update" id="lupd"></div>
 </div>
 <script>
-const CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQIbsSiY6PzF6kYx4WKciLVlbx5HZR-PeU_kp3cX4c3aYNJtuUTwqmAReO8FYl1_VqrWGtLgH65CgHq/pub?gid=1088044025&single=true&output=csv';
-const PROXIES=[
-  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
-  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-  u=>`https://proxy.cors.sh/${u}`,
-];
+// El CSV se sirve a través de un Google Apps Script propio (Mapulauquen CSV Proxy)
+// que lee el sheet publicado del lado del servidor y lo devuelve con CORS abierto.
+// Reemplaza a la antigua cadena de 5 proxies CORS públicos (corsproxy.io, allorigins,
+// codetabs, cors.sh), que dejaron de ser confiables (varios ahora exigen API key paga).
+const PROXY_URL='https://script.google.com/macros/s/AKfycbx0gzj7m1p5H2M__wTYDn6SKkwB0HNbKzxZqJhMDYSKerfNz0oZYDqKYSQMdO5We1f9Ig/exec';
 const CABS=[
   {id:'MP01',n:'Araucaria'},{id:'MP02',n:'Alerce'},{id:'MP03',n:'Ulmo'},
   {id:'MP04',n:'Castaño'},{id:'MP05',n:'Boldo'},{id:'MP06',n:'Laurel'},
@@ -384,27 +381,24 @@ function setView(v){
 function navPrev(){if(viewMode==='year'){curY--;}else{curM--;if(curM<0){curM=11;curY--;}}render();}
 function navNext(){if(viewMode==='year'){curY++;}else{curM++;if(curM>11){curM=0;curY++;}}render();}
 
-async function tryFetch(url){
-  const urlNoCache=url+'&t='+Date.now();
-  for(let i=0;i<PROXIES.length;i++){
-    setSt(`Conectando (${i+1}/${PROXIES.length})...`,'');
-    try{
-      const ctrl=new AbortController();
-      const tid=setTimeout(()=>ctrl.abort(),9000);
-      const r=await fetch(PROXIES[i](urlNoCache),{signal:ctrl.signal,cache:'no-store'});
-      clearTimeout(tid);
-      if(!r.ok)continue;
-      const text=await r.text();
-      if(text.trim().startsWith('<')||text.length<50)continue;
-      return text;
-    }catch(e){continue;}
-  }
-  return null;
+async function tryFetch(){
+  const urlNoCache=PROXY_URL+'?t='+Date.now();
+  setSt('Conectando...','');
+  try{
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),9000);
+    const r=await fetch(urlNoCache,{signal:ctrl.signal,cache:'no-store'});
+    clearTimeout(tid);
+    if(!r.ok)return null;
+    const text=await r.text();
+    if(text.trim().startsWith('<')||text.trim().startsWith('ERROR')||text.length<50)return null;
+    return text;
+  }catch(e){return null;}
 }
 
 async function loadData(){
   setSt('Conectando...','');
-  const text=await tryFetch(CSV);
+  const text=await tryFetch();
   if(!text){setSt('Sin conexión — mostrando datos guardados','err');if(reservas.length===0)loadFallback();render();return;}
   try{
     const rows=parseCSV(text);
