@@ -386,7 +386,7 @@ async function tryFetch(){
   setSt('Conectando...','');
   try{
     const ctrl=new AbortController();
-    const tid=setTimeout(()=>ctrl.abort(),9000);
+    const tid=setTimeout(()=>ctrl.abort(),20000);
     const r=await fetch(urlNoCache,{signal:ctrl.signal,cache:'no-store'});
     clearTimeout(tid);
     if(!r.ok)return null;
@@ -398,7 +398,7 @@ async function tryFetch(){
 
 async function loadData(){
   setSt('Conectando...','');
-  const text=await tryFetch();
+  let text=await tryFetch(); if(!text)text=await tryFetch();
   if(!text){setSt('Sin conexión — mostrando datos guardados','err');if(reservas.length===0)loadFallback();render();return;}
   try{
     const rows=parseCSV(text);
