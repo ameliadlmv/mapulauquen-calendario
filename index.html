@@ -165,8 +165,10 @@ const CABS=[
   {id:'MP04',n:'Castaño'},{id:'MP05',n:'Boldo'},{id:'MP06',n:'Laurel'},
   {id:'MP07',n:'Raulí'},{id:'MP08',n:'Coihue'},{id:'MP09',n:'Ciprés'},
   {id:'MP10',n:'Pino Oregón'},
+  {id:'MPS1',n:'Salón de Eventos'},
 ];
-const CABS_ONLY=CABS;
+// El salón se muestra en el calendario, pero no cuenta como alojamiento.
+const CABS_ONLY=CABS.filter(c=>!/^MPS/.test(c.id));
 const N_CABS=CABS_ONLY.length;
 const SERVICES=[{id:'MPS1',n:'Salón de Eventos'},{id:'MPS2',n:'Jacuzzi'}];
 function isService(id){return /^MPS/.test(id||'');}
@@ -199,7 +201,8 @@ function buildOcc(Y,M){
     const cur=new Date(Y,M,d);
     reservas.forEach(r=>{
       if(!map[r.id])return;
-      if(cur>=r.ll&&cur<r.sa){
+      const sameDaySalon=r.id==='MPS1'&&r.ll.getTime()===r.sa.getTime()&&cur.getTime()===r.ll.getTime();
+      if((cur>=r.ll&&cur<r.sa)||sameDaySalon){
         if(!map[r.id][d])map[r.id][d]=[];
         map[r.id][d].push(r);
       }
@@ -258,7 +261,7 @@ function updateStats(){
 
 function renderMonthly(){
   const dim=new Date(curY,curM+1,0).getDate(),occ=buildOcc(curY,curM),today=new Date();
-  let html='<table><thead><tr><th class="cc">Cabaña</th>';
+  let html='<table><thead><tr><th class="cc">Cabaña / Salón</th>';
   for(let d=1;d<=dim;d++){const dow=new Date(curY,curM,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===curM&&today.getDate()===d;html+=`<th class="dc${wk?' wk':''}${isT?' tod':''}">${d}<br>${DN[dow]}</th>`;}
   html+='</tr></thead><tbody>';
   CABS.forEach((cab,rowIdx)=>{
@@ -295,7 +298,7 @@ function renderAnnual(){
     CABS_ONLY.forEach(cab=>{for(let d=1;d<=dim;d++){if(occ[cab.id]&&occ[cab.id][d])mn++;}});
     const mocp=Math.round((mn/(N_CABS*dim))*100);
     const pillCls=mocp>=70?'hi':mocp>=35?'mid':'lo';
-    html+=`<div class="month-block"><div class="month-block-header"><span class="month-block-name">${MNAMES[M]}</span><span class="month-occ-pill ${pillCls}">${mocp}% ocup.</span></div><div style="overflow-x:auto"><table class="ann-table"><thead><tr><th class="ann-head-cc">Cabaña</th>`;
+    html+=`<div class="month-block"><div class="month-block-header"><span class="month-block-name">${MNAMES[M]}</span><span class="month-occ-pill ${pillCls}">${mocp}% ocup.</span></div><div style="overflow-x:auto"><table class="ann-table"><thead><tr><th class="ann-head-cc">Cabaña / Salón</th>`;
     for(let d=1;d<=dim;d++){const dow=new Date(curY,M,d).getDay(),wk=dow===0||dow===6;const isT=today.getFullYear()===curY&&today.getMonth()===M&&today.getDate()===d;html+=`<th class="ann-dh${wk?' wk':''}${isT?' tod':''}">${d}</th>`;}
     html+=`</tr></thead><tbody>`;
     CABS.forEach((cab,rowIdx)=>{
